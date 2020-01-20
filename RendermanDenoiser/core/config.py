@@ -103,7 +103,7 @@ def checkRendermanProServer():
     rmantree = fileM.returnRMANTREE()
 
     if rmantree is False:
-        if "RMANTRE" in os.environ.keys():
+        if "RMANTREE" in os.environ.keys():
             rmantree = os.environ["RMANTREE"]
         else:
             sys.stderr.write("\nCould not find Pixar Renderman Pro Server.\n")

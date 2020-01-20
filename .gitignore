@@ -3,6 +3,9 @@ __pycache__/
 .vs/
 .vscode/
 
+# Renderman Denoiser
+RendermanDenoiser/core/config.json
+
 # Extensions
 *.pyc
 
