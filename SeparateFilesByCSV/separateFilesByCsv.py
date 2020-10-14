@@ -5,7 +5,7 @@ import csv
 
 
 description = """
-Separate files by CSV pattern.
+Separate files by IDs that lives in a CSV file.
 """
 parser = argparse.ArgumentParser(
     formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -39,16 +39,15 @@ dest = args.destDirectory
 csvFile = args.csvFile
 ids = []
 
-with open(csvFile) as f:
+with open(csvFile, "rU") as f:
     csvReader = csv.reader(f)
-    next(csvReader)
     for i, row in enumerate(csvReader):
         if i == 0:
             continue
         ids.append(row[0])
 
 print("Found %s IDs." % len(ids))
-status = input("Copy the files to destination folder? (y, n) ")
+status = raw_input("Copy the files to destination folder? (y, n) ")
 if status.lower() == "y":
     copiedFiles = 0
     for curId in ids:
