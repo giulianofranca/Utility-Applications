@@ -20,8 +20,8 @@ import maya.api.OpenMaya as om2
 ############################## EDIT HERE! ##############################
 ########################################################################
 
-aimAxis = "Z"
-upAxis = "Y"
+aimAxis = "Y"
+upAxis = "Z"
 
 ########################################################################
 ############################# END EDIT HERE ############################
@@ -32,16 +32,6 @@ selList = om2.MGlobal.getActiveSelectionList()
 if selList.length() != 2:
     raise RuntimeError("Select first the source object than the curve.")
 
-# Get the original obj and shape paths
-origPath = selList.getDagPath(0)
-if not origPath.node().hasFn(om2.MFn.kTransform):
-    raise RuntimeError("Select the transform node of the source object.")
-origShapePath = om2.MDagPath(origPath)
-origShapePath.extendToShape()
-if not origShapePath.node().hasFn(om2.MFn.kMesh):
-    raise RuntimeError("Select an polygon mesh as source object.")
-srcObj = origPath.fullPathName()
-
 # Get curve obj and shape paths
 curvePath = selList.getDagPath(1)
 if not curvePath.node().hasFn(om2.MFn.kTransform):
@@ -51,13 +41,44 @@ curveShapePath.extendToShape()
 if not curveShapePath.node().hasFn(om2.MFn.kNurbsCurve):
     raise RuntimeError("Select an NURBS curve as curve object.")
 
-# Get object width, height and depth
-origMtx = origPath.inclusiveMatrix()
-dagFn = om2.MFnDagNode(origShapePath)
-objBBox = dagFn.boundingBox
-objWidth = objBBox.width * origMtx[0]
-objHeight = objBBox.height * origMtx[5]
-objDepth = objBBox.depth * origMtx[10]
+# Get the original obj and shape paths
+origPath = selList.getDagPath(0)
+if not origPath.node().hasFn(om2.MFn.kTransform):
+    raise RuntimeError("Select the transform node of the source object.")
+origShapePath = om2.MDagPath(origPath)
+origShapePath.extendToShape()
+if origShapePath.node().hasFn(om2.MFn.kMesh):
+    # Get object width, height and depth
+    origMtx = origPath.inclusiveMatrix()
+    dagFn = om2.MFnDagNode(origShapePath)
+    objBBox = dagFn.boundingBox
+    objWidth = objBBox.width * origMtx[0]
+    objHeight = objBBox.height * origMtx[5]
+    objDepth = objBBox.depth * origMtx[10]
+elif origShapePath.node().hasFn(om2.MFn.kPluginShape):
+    # Get object width, height and depth
+    origMtx = origPath.inclusiveMatrix()
+    shapeMob = origShapePath.node()
+    nodeFn = om2.MFnDependencyNode(shapeMob)
+    minValues = []
+    maxValues = []
+    for i in range(3):
+        curPlug = nodeFn.findPlug("MinBoundingBox%s" % i, False)
+        curValue = curPlug.asFloat()
+        minValues.append(curValue)
+    for i in range(3):
+        curPlug = nodeFn.findPlug("MaxBoundingBox%s" % i, False)
+        curValue = curPlug.asFloat()
+        maxValues.append(curValue)
+    minPnt = om2.MPoint(minValues)
+    maxPnt = om2.MPoint(maxValues)
+    objBBox = om2.MBoundingBox(minPnt, maxPnt)
+    objWidth = objBBox.width * origMtx[0]
+    objHeight = objBBox.height * origMtx[5]
+    objDepth = objBBox.depth * origMtx[10]
+else:
+    raise RuntimeError("Select an polygon mesh or plugin shape as source object.")
+srcObj = origPath.fullPathName()
 
 # Get the aim axis
 if aimAxis.upper() == "X":
